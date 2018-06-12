@@ -24,16 +24,16 @@ public class WeChatLogin{
 
     public static WeChatLogin create(String userInfo) {
 
-        int openidStart = userInfo.indexOf("openid")+9;
+        int openidStart = userInfo.indexOf("openid")+10;
         int openidEnd = userInfo.indexOf("\"",openidStart);
         String openid= userInfo.substring(openidStart,openidEnd);
-        int sessionkeyStart = userInfo.indexOf("session_key")+14;
+        int sessionkeyStart = userInfo.indexOf("session_key")+15;
         int sessionkeyEnd = userInfo.indexOf("\"",sessionkeyStart);
         String sessionkey = userInfo.substring(sessionkeyStart,sessionkeyEnd);
         int unionidStart = userInfo.indexOf("unionid");
         String unionid = null;
         if (unionidStart > -1){
-            unionidStart = unionidStart + 10;
+            unionidStart = unionidStart + 11;
             int unionidEnd = userInfo.indexOf("\"",unionidStart);
             unionid = userInfo.substring(unionidStart,unionidEnd);
         }
