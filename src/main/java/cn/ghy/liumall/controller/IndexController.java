@@ -47,7 +47,9 @@ public class IndexController {
 
     @RequestMapping(value="/signin", method= RequestMethod.POST)
     @ResponseBody
-//    receive code from client get user information from wechat server
+    //receive code from client and get user information from wechat server
+    //add user info into database
+    //return token to client
     public ApiResponse authenticateUser(@Valid @RequestBody String code){
         String wechatServer = "https://api.weixin.qq.com/sns/jscode2session?appid="+appId+"&secret="+appSecret+"&js_code="+code+"&grant_type=authorization_code";
         String loginInfo = HttpsRequest.httpsRequest(wechatServer,"GET",null);
@@ -56,16 +58,23 @@ public class IndexController {
         }else{
             WeChatLogin weChatLogin = WeChatLogin.create(loginInfo);
             if (weChatUserMapper.findUserByOpenId(weChatLogin.getOpenId())==null){
-                WeChatUser weChatUser = new WeChatUser((long)1,weChatLogin.getOpenId(),weChatLogin.getSessionKey(),weChatLogin.getUnionId());
+                WeChatUser weChatUser = new WeChatUser(weChatLogin.getOpenId(),weChatLogin.getSessionKey(),weChatLogin.getUnionId());
                 weChatUserMapper.insert(weChatUser);
                 roleMapper.insert(weChatUser.getUserId(),"ROLE_USER");
             }
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            weChatLogin.getOpenId(),
-                            null
-                    )
-            );
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(
+//                        weChatLogin.getOpenId(),
+//                        null
+//                )
+//        );
+            WeChatUser user = weChatUserMapper.findUserByOpenId(weChatLogin.getOpenId());
+            //get role from database
+            List<GrantedAuthority> authorities = roleMapper.findRolesByUserId(user.getUserId()).stream().map(role ->
+                    new SimpleGrantedAuthority(role.getRole())
+            ).collect(Collectors.toList());
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, weChatLogin.getOpenId(), authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             String token = tokenProvider.generateWechatToken(weChatLogin, signinExpirationInMs);
@@ -75,11 +84,12 @@ public class IndexController {
 
     @RequestMapping(value="/test/signin", method= RequestMethod.POST)
     @ResponseBody
+    //authentication works
     public ApiResponse testAuthenticateUser(){
-        String loginInfo = "{\"openid\": \"OPENID\",\"session_key\": \"SESSIONKEY\",\"unionid\": \"UNIONID\"}";
+        String loginInfo = "{\"openid\": \"OPENID2\",\"session_key\": \"SESSIONKEY\",\"unionid\": \"UNIONID\"}";
         WeChatLogin weChatLogin = WeChatLogin.create(loginInfo);
         if (weChatUserMapper.findUserByOpenId(weChatLogin.getOpenId())==null) {
-            WeChatUser weChatUser = new WeChatUser((long) 2, weChatLogin.getOpenId(), weChatLogin.getSessionKey(), weChatLogin.getUnionId());
+            WeChatUser weChatUser = new WeChatUser(weChatLogin.getOpenId(), weChatLogin.getSessionKey(), weChatLogin.getUnionId());
             weChatUserMapper.insert(weChatUser);
             roleMapper.insert(weChatUser.getUserId(), "ROLE_USER");
         }

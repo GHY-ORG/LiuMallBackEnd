@@ -10,11 +10,9 @@ public class WeChatUser implements Serializable {
 
     public WeChatUser(){}
 
-    public WeChatUser(Long userId,
-                       String openId,
+    public WeChatUser(String openId,
                        String sessionKey,
                        String unionId) {
-        this.userId = userId;
         this.openId = openId;
         this.sessionKey = sessionKey;
         this.unionId = unionId;
